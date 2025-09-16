@@ -1,0 +1,51 @@
+
+name: CI - DVC Repro & MLflow Log
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Init DVC (no remote required for CI)
+        run: |
+          dvc init -q
+          git config user.email "actions@github.com"
+          git config user.name "github-actions"
+
+      - name: Reproduce pipeline
+        run: dvc repro -v
+
+      - name: Show metrics
+        run: |
+          python - << 'PY'
+          import json
+          m=json.load(open('reports/metrics.json'))
+          print(m)
+          PY
+
+      - name: Upload artifacts (metrics, model, mlruns)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-artifacts
+          path: |
+            reports/metrics.json
+            models/model.joblib
+            mlruns
+          if-no-files-found: ignore

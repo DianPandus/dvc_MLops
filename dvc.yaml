@@ -1,0 +1,43 @@
+
+stages:
+  get_data:
+    cmd: python src/get_data.py --url ${data.url} --out data/raw/penguins.csv
+    deps:
+      - src/get_data.py
+    outs:
+      - data/raw/penguins.csv
+
+  split_data:
+    cmd: python src/split_data.py --input data/raw/penguins.csv --outdir data/processed --test_size ${split.test_size} --seed ${split.seed}
+    deps:
+      - src/split_data.py
+      - data/raw/penguins.csv
+    outs:
+      - data/processed/train.csv
+      - data/processed/test.csv
+
+  params2json:
+    cmd: python src/params2json.py --infile params.yaml --outfile params.json
+    deps:
+      - src/params2json.py
+      - params.yaml
+    outs:
+      - params.json
+
+  train:
+    cmd: python src/train.py --train data/processed/train.csv --model models/model.joblib --params_json params.json
+    deps:
+      - src/train.py
+      - data/processed/train.csv
+      - params.json
+    outs:
+      - models/model.joblib
+
+  eval:
+    cmd: python src/evaluate.py --test data/processed/test.csv --model models/model.joblib --report reports/metrics.json
+    deps:
+      - src/evaluate.py
+      - data/processed/test.csv
+      - models/model.joblib
+    metrics:
+      - reports/metrics.json
