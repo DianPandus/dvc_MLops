@@ -3,9 +3,12 @@ import argparse
 import json
 import pandas as pd
 import joblib
+import os
+import mlflow
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 
 FEATURES = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "island", "sex"]
+
 
 def main(test_csv: str, model_path: str, report_out: str):
     df = pd.read_csv(test_csv)
@@ -18,20 +21,20 @@ def main(test_csv: str, model_path: str, report_out: str):
     f1m = f1_score(y_true, y_pred, average="macro")
     report = classification_report(y_true, y_pred, output_dict=True)
 
-    out = {
-        "accuracy": acc,
-        "f1_macro": f1m,
-        "classification_report": report
-    }
+    out = {"accuracy": acc, "f1_macro": f1m, "classification_report": report}
+
+    # pastikan folder ada
+    os.makedirs(os.path.dirname(report_out) or ".", exist_ok=True)
     with open(report_out, "w") as f:
         json.dump(out, f, indent=2)
 
+    # === MLflow logging (run eval terpisah) ===
+    mlflow.set_tracking_uri("file:mlruns")
+    mlflow.set_experiment("penguins_rf")
+    with mlflow.start_run(run_name="eval"):
+        mlflow.log_metrics({"accuracy": acc, "f1_macro": f1m})
+        mlflow.log_artifact(report_out)
+        mlflow.set_tags({"stage": "eval"})
+
     print(json.dumps({"accuracy": acc, "f1_macro": f1m}, indent=2))
 
-if __name__ == "__main__":
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--test", required=True)
-    ap.add_argument("--model", required=True)
-    ap.add_argument("--report", required=True)
-    args = ap.parse_args()
-    main(args.test, args.model, args.report)

@@ -1,0 +1,95 @@
+schema: '2.0'
+stages:
+  get_data:
+    cmd: python src/get_data.py --url 
+      https://raw.githubusercontent.com/allisonhorst/palmerpenguins/master/inst/extdata/penguins.csv
+      --out data/raw/penguins.csv
+    deps:
+    - path: src/get_data.py
+      hash: md5
+      md5: 3ac48bdf84967162f0ed2449cb8e9bb3
+      size: 463
+    outs:
+    - path: data/raw/penguins.csv
+      hash: md5
+      md5: 07304152ec3b7dda1cd405050b137ecd
+      size: 17080
+  split_data:
+    cmd: python src/split_data.py --input data/raw/penguins.csv --outdir 
+      data/processed --test_size 0.2 --seed 42
+    deps:
+    - path: data/raw/penguins.csv
+      hash: md5
+      md5: 07304152ec3b7dda1cd405050b137ecd
+      size: 17080
+    - path: src/split_data.py
+      hash: md5
+      md5: e2f7b1362cd52b66c22fb7b6816f5fe2
+      size: 1053
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 31a32cd84092b9dfdb55c9ed79813018
+      size: 3509
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 1b0f942e80432e9c7ce6285288e55ae8
+      size: 13655
+  params2json:
+    cmd: python src/params2json.py --infile params.yaml --outfile params.json
+    deps:
+    - path: params.yaml
+      hash: md5
+      md5: 9ab190f1ea6cbf7baadcca0fba7abb77
+      size: 251
+    - path: src/params2json.py
+      hash: md5
+      md5: dbbb1d44d0615a10bc6c02c0903ea296
+      size: 378
+    outs:
+    - path: params.json
+      hash: md5
+      md5: e4363560dca77b0efa91968abe7ea72b
+      size: 272
+  train:
+    cmd: python src/train.py --train data/processed/train.csv --model 
+      models/model.joblib --params_json params.json
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: 1b0f942e80432e9c7ce6285288e55ae8
+      size: 13655
+    - path: params.json
+      hash: md5
+      md5: e4363560dca77b0efa91968abe7ea72b
+      size: 272
+    - path: src/train.py
+      hash: md5
+      md5: 2b91977768715916b45ab12f0194ae04
+      size: 2811
+    outs:
+    - path: models/model.joblib
+      hash: md5
+      md5: 01ef41c3e77676d7f3c510a05b30e414
+      size: 554579
+  eval:
+    cmd: python src/evaluate.py --test data/processed/test.csv --model 
+      models/model.joblib --report reports/metrics.json
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 31a32cd84092b9dfdb55c9ed79813018
+      size: 3509
+    - path: models/model.joblib
+      hash: md5
+      md5: 01ef41c3e77676d7f3c510a05b30e414
+      size: 554579
+    - path: src/evaluate.py
+      hash: md5
+      md5: d99d40d182ca4092452bedf82184b7bc
+      size: 1128
+    outs:
+    - path: reports/metrics.json
+      hash: md5
+      md5: 317031339245d0fda34d74bed59e5683
+      size: 707
