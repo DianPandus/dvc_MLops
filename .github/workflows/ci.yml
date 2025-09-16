@@ -1,9 +1,8 @@
-
 name: CI - DVC Repro & MLflow Log
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
 
 jobs:
@@ -16,29 +15,30 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Init DVC (no remote required for CI)
+      # OPTIONAL: kalau mau tetap ada guard, tapi jangan paksa init
+      - name: Ensure DVC exists (skip if already initialized)
         run: |
-          dvc init -q
-          git config user.email "actions@github.com"
-          git config user.name "github-actions"
+          if [ ! -d ".dvc" ]; then
+            dvc init -q
+          fi
+
+      # OPTIONAL: kalau kamu BELUM menambah os.makedirs di evaluate.py,
+      # tetap bikin folder output agar eval tidak gagal.
+      - name: Prepare output dirs
+        run: mkdir -p reports
 
       - name: Reproduce pipeline
         run: dvc repro -v
 
       - name: Show metrics
-        run: |
-          python - << 'PY'
-          import json
-          m=json.load(open('reports/metrics.json'))
-          print(m)
-          PY
+        run: cat reports/metrics.json
 
       - name: Upload artifacts (metrics, model, mlruns)
         uses: actions/upload-artifact@v4
