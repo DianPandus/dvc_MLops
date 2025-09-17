@@ -34,6 +34,9 @@ jobs:
       - name: Prepare output dirs
         run: mkdir -p reports
 
+      - name: Prepare output dirs (safety)
+        run: mkdir -p reports
+
       - name: Reproduce pipeline
         run: dvc repro -v
 
