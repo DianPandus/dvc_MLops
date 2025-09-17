@@ -22,3 +22,5 @@ reports/*.json
 # VSCode / IDE
 .vscode/
 .idea/
+
+params.json
